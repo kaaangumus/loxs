@@ -71,10 +71,68 @@ cd loxs
 ```bash
 pip3 install -r requirements.txt
 ```
+
+### Windows setup
+
+PowerShell:
+
+```powershell
+.\setup_windows.ps1
+```
+
+Run the GUI after setup:
+
+```powershell
+.\.venv\Scripts\python.exe .\lox.py
+```
+
+Run the CLI after setup:
+
+```powershell
+.\.venv\Scripts\python.exe .\loxs.py
+```
+
+### Linux setup
+
+```bash
+chmod +x setup_linux.sh
+./setup_linux.sh
+```
+
+If `python3-venv` or `tkinter` is missing on Debian/Ubuntu:
+
+```bash
+sudo apt update && sudo apt install -y python3-venv python3-tk
+```
+
+Run the GUI after setup:
+
+```bash
+source .venv/bin/activate && python lox.py
+```
+
+Run the CLI after setup:
+
+```bash
+source .venv/bin/activate && python loxs.py
+```
+
 ### Run the Script
 
 ```bash
 python3 loxs.py
+```
+
+### Run the Tkinter GUI
+
+```powershell
+python .\lox.py
+```
+
+or:
+
+```powershell
+python .\loxs_gui.py
 ```
 <!-- to update the tool to the latest version
 ```bash
@@ -91,6 +149,18 @@ after pressing 5 and exiting from the tool run the tool again it will run with a
 | Success Criteria          | Define patterns or strings indicating a successful exploitation attempt.                |
 | Concurrent Threads        | Set the number of threads for multi-threaded scanning.                                  |
 | View and Save Results     | Display results in real-time during the scan, and save vulnerable URLs for future use.  |
+
+----
+
+## Authenticated Selenium Scans
+
+If the target site requires a logged-in session, use the Selenium-based scanners with an existing Chrome profile.
+
+1. Log in to the target site in Chrome with the profile you want to reuse.
+2. Close Chrome before starting a scan so the profile directory is not locked.
+3. When Loxs asks for the Chrome profile directory, enter the profile data folder path, for example `%LOCALAPPDATA%\Google\Chrome\User Data` on Windows or `~/.config/google-chrome` on Linux.
+4. Use this mode for the Selenium-based scanners, especially Open Redirect and XSS.
+5. When a profile is provided, Loxs automatically reduces concurrency to a single Selenium driver to avoid profile conflicts.
 
 ----
 

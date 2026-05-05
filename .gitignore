@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and reports
+*.log
+*.err.log
+loxs_report_*.html
+*_report_*.html
+xssreport.html
+
+# Local test/lab artifacts
+lab/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

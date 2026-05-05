@@ -45,7 +45,6 @@ try:
     from prompt_toolkit.completion import PathCompleter
     from urllib.parse import urlparse
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    from curses import panel
     import random
     import re
     from wsgiref import headers
@@ -149,6 +148,28 @@ try:
 
     def clear_screen():
         os.system('cls' if os.name == 'nt' else 'clear')
+
+    def build_chrome_options(profile_dir=None):
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-browser-side-navigation")
+        chrome_options.add_argument("--disable-infobars")
+        chrome_options.add_argument("--disable-notifications")
+        chrome_options.page_load_strategy = 'eager'
+
+        if profile_dir:
+            chrome_options.add_argument(f"--user-data-dir={profile_dir}")
+
+        return chrome_options
+
+    def prompt_for_chrome_profile():
+        profile_dir = input("[?] Chrome profile directory for an existing login session (press Enter for a fresh profile): ").strip()
+        return profile_dir or None
 
     def display_menu():
         title = r"""
@@ -699,9 +720,11 @@ try:
                 headers = {
                     'User-Agent': get_random_user_agent()
                 }
+                if cookie:
+                    headers['Cookie'] = cookie
 
                 try:
-                    response = requests.get(url_with_payload, headers=headers, cookies={'cookie': cookie} if cookie else None)
+                    response = requests.get(url_with_payload, headers=headers, timeout=15)
                     response.raise_for_status()
                     success = True
                     error_message = None
@@ -723,7 +746,10 @@ try:
 
             def get_file_path(prompt_text):
                 completer = PathCompleter()
-                return prompt(prompt_text, completer=completer).strip()
+                try:
+                    return prompt(prompt_text, completer=completer).strip()
+                except Exception:
+                    return input(prompt_text).strip()
 
             def handle_exception(exc_type, exc_value, exc_traceback, vulnerable_urls, total_found, total_scanned, start_time):
                 if issubclass(exc_type, KeyboardInterrupt):
@@ -1016,16 +1042,42 @@ try:
             
             return url_combinations
 
-        def create_driver():
-            chrome_options = Options()
-            chrome_options.add_argument("--headless")
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--disable-extensions")
-            chrome_options.add_argument("--disable-browser-side-navigation")
-            chrome_options.add_argument("--disable-infobars")
-            chrome_options.add_argument("--disable-notifications")
-            chrome_options.page_load_strategy = 'eager'
+        def parse_cookie_string(cookie_string):
+            if not cookie_string:
+                return []
+
+            cookies = []
+            for part in cookie_string.split(';'):
+                if '=' not in part:
+                    continue
+                name, value = part.split('=', 1)
+                name = name.strip()
+                value = value.strip()
+                if name:
+                    cookies.append({'name': name, 'value': value})
+
+            return cookies
+
+        def inject_cookies(driver, url, cookie_string):
+            cookies = parse_cookie_string(cookie_string)
+            if not cookies:
+                return
+
+            scheme, netloc, _, _, _ = urlsplit(url)
+            if not scheme:
+                scheme = 'http'
+            base_url = urlunsplit((scheme, netloc, '/', '', ''))
+
+            driver.get(base_url)
+            driver.delete_all_cookies()
+            for cookie in cookies:
+                try:
+                    driver.add_cookie(cookie)
+                except Exception as e:
+                    print(Fore.YELLOW + f"[!] Could not add cookie '{cookie['name']}': {e}")
+
+        def create_driver(profile_dir=None):
+            chrome_options = build_chrome_options(profile_dir)
             logging.disable(logging.CRITICAL)
             
 
@@ -1042,7 +1094,7 @@ try:
         def return_driver(driver):
             driver_pool.put(driver)
 
-        def check_vulnerability(url, payload, vulnerable_urls, total_scanned, timeout, scan_state):
+        def check_vulnerability(url, payload, vulnerable_urls, total_scanned, timeout, scan_state, cookie_string=None):
             driver = get_driver()
             try:
                 payload_urls = generate_payload_urls(url, payload)
@@ -1051,6 +1103,7 @@ try:
 
                 for payload_url in payload_urls:
                     try:
+                        inject_cookies(driver, payload_url, cookie_string)
                         driver.get(payload_url)
                         
                         total_scanned[0] += 1
@@ -1082,16 +1135,22 @@ try:
 
 
 
-        def run_scan(urls, payload_file, timeout, scan_state):
+        def run_scan(urls, payload_file, timeout, scan_state, profile_dir=None, cookie_string=None):
             payloads = load_payloads(payload_file)
             vulnerable_urls = []
             total_scanned = [0]
+
+            pool_size = 1 if profile_dir else 3
+            worker_count = 1 if profile_dir else 2
+
+            if profile_dir:
+                print(Fore.YELLOW + "[i] Chrome profile mode is enabled; using a single Selenium driver.")
             
-            for _ in range(3):
-                driver_pool.put(create_driver())
+            for _ in range(pool_size):
+                driver_pool.put(create_driver(profile_dir))
             
             try:
-                with ThreadPoolExecutor(max_workers=2) as executor:
+                with ThreadPoolExecutor(max_workers=worker_count) as executor:
                     futures = []
                     for url in urls:
                         for payload in payloads:
@@ -1103,7 +1162,8 @@ try:
                                     vulnerable_urls,
                                     total_scanned,
                                     timeout,
-                                    scan_state
+                                    scan_state,
+                                    cookie_string
                                 )
                             )
                     
@@ -1149,7 +1209,10 @@ try:
 
         def get_file_path(prompt_text):
             completer = PathCompleter()
-            return prompt(prompt_text, completer=completer).strip()
+            try:
+                return prompt(prompt_text, completer=completer).strip()
+            except Exception:
+                return input(prompt_text).strip()
 
         def prompt_for_urls():
             while True:
@@ -1212,6 +1275,8 @@ try:
             urls = prompt_for_urls()
 
             payload_file = prompt_for_valid_file_path("[?] Enter the path to the payloads file: ")
+            chrome_profile_dir = prompt_for_chrome_profile()
+            cookie_string = input("[?] Enter cookie string for authentication (e.g: session=abc; PHPSESSID=xyz), press Enter if not needed: ").strip() or None
             
             try:
                 timeout = float(input(Fore.CYAN + "Enter the timeout duration for each request (Press Enter for 0.5): "))
@@ -1234,7 +1299,7 @@ try:
                     print(Fore.YELLOW + f"│{box_content.center(box_width - 2)}│")
                     print(Fore.YELLOW + "└" + "─" * (box_width - 2) + "┘\n")
 
-                    vulnerable_urls, scanned = run_scan([url], payload_file, timeout, scan_state)
+                    vulnerable_urls, scanned = run_scan([url], payload_file, timeout, scan_state, chrome_profile_dir, cookie_string)
                     all_vulnerable_urls.extend(vulnerable_urls)
                     total_scanned += scanned
 
@@ -1267,23 +1332,11 @@ try:
         drivers = []            
             
             
-        def get_chrome_driver():
+        def get_chrome_driver(profile_dir=None):
             if not scan_active:
                 return None
                 
-            chrome_options = Options()
-            chrome_options.add_argument("--headless")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--window-size=1920,1080")
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--disable-gpu")
-            chrome_options.add_argument("--disable-extensions")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--disable-browser-side-navigation")
-            chrome_options.add_argument("--disable-infobars")
-            chrome_options.add_argument("--disable-notifications")
-            chrome_options.page_load_strategy = 'eager'
+            chrome_options = build_chrome_options(profile_dir)
             logging.disable(logging.CRITICAL)
 
             service = Service(ChromeDriverManager().install())
@@ -1293,18 +1346,52 @@ try:
             return driver
 
 
-        def check_payload_with_selenium(url, payload, param_name=None):
+        def parse_cookie_string(cookie_string):
+            if not cookie_string:
+                return []
+
+            cookies = []
+            for part in cookie_string.split(';'):
+                if '=' not in part:
+                    continue
+                name, value = part.split('=', 1)
+                name = name.strip()
+                value = value.strip()
+                if name:
+                    cookies.append({'name': name, 'value': value})
+
+            return cookies
+
+        def inject_cookies(driver, url, cookie_string):
+            cookies = parse_cookie_string(cookie_string)
+            if not cookies:
+                return
+
+            parsed = urllib.parse.urlparse(url)
+            scheme = parsed.scheme or 'http'
+            base_url = urllib.parse.urlunparse((scheme, parsed.netloc, '/', '', '', ''))
+
+            driver.get(base_url)
+            driver.delete_all_cookies()
+            for cookie in cookies:
+                try:
+                    driver.add_cookie(cookie)
+                except Exception as e:
+                    print(Fore.YELLOW + f"[!] Could not add cookie '{cookie['name']}': {e}")
+
+        def check_payload_with_selenium(url, payload, param_name=None, profile_dir=None, cookie_string=None):
             if not scan_active:
                 return False
                 
             driver = None
             try:
-                driver = get_chrome_driver()
+                driver = get_chrome_driver(profile_dir)
                 if not driver:
                     return False
                     
                 print(Fore.YELLOW + f"[→] Testing {param_name if param_name else 'path'}: {Fore.CYAN}{url}")
                 
+                inject_cookies(driver, url, cookie_string)
                 driver.get(url)
                 WebDriverWait(driver, 10).until(
                     lambda d: d.execute_script('return document.readyState') == 'complete'
@@ -1339,10 +1426,14 @@ try:
             
             return False
 
-        def test_open_redirect(url, payloads, max_threads=5):
+        def test_open_redirect(url, payloads, max_threads=5, profile_dir=None, cookie_string=None):
             nonlocal scan_active, executor
             found_vulnerabilities = 0
             vulnerable_urls = []
+
+            if profile_dir and max_threads > 1:
+                print(Fore.YELLOW + "[i] Chrome profile mode is enabled; reducing concurrency to 1 to avoid profile conflicts.")
+                max_threads = 1
             
             parsed = urllib.parse.urlparse(url)
             print(Fore.MAGENTA + f"[i] Parsed URL: {parsed}")
@@ -1374,7 +1465,9 @@ try:
                                 check_payload_with_selenium,
                                 url=urllib.parse.urlunparse(test_url),
                                 payload=payload,
-                                param_name='path'
+                                    param_name='path',
+                                    profile_dir=profile_dir,
+                                    cookie_string=cookie_string
                             )
                         )
                     
@@ -1430,7 +1523,9 @@ try:
                                     check_payload_with_selenium, 
                                     test_url, 
                                     payload, 
-                                    param
+                                    param,
+                                    profile_dir,
+                                    cookie_string
                                 )
                             )
                     
@@ -1494,7 +1589,7 @@ try:
             try:
                 return prompt(prompt_text, completer=completer).strip()
             except:
-                return None
+                return input(prompt_text).strip()
 
         def prompt_for_urls():
             while scan_active:
@@ -1610,6 +1705,12 @@ try:
 
             max_threads_input = input("[?] Enter the number of concurrent threads (0-10, press Enter for 5): ").strip()
             max_threads = int(max_threads_input) if max_threads_input.isdigit() and 0 <= int(max_threads_input) <= 10 else 5
+            chrome_profile_dir = prompt_for_chrome_profile()
+            cookie_string = input("[?] Enter cookie string for authentication (e.g: session=abc; PHPSESSID=xyz), press Enter if not needed: ").strip() or None
+
+            if chrome_profile_dir and max_threads > 1:
+                print(Fore.YELLOW + "[i] Chrome profile mode is enabled; forcing single-threaded scanning.")
+                max_threads = 1
 
             print(Fore.YELLOW + "\n[i] Loading, Please Wait...")
             clear_screen()
@@ -1643,7 +1744,7 @@ try:
                     print(Fore.YELLOW + f"│{box_content.center(box_width - 2)}│")
                     print(Fore.YELLOW + "└" + "─" * (box_width - 2) + "┘\n\n")
                     
-                    found, urls_with_payloads = test_open_redirect(url, payloads, max_threads)
+                    found, urls_with_payloads = test_open_redirect(url, payloads, max_threads, chrome_profile_dir, cookie_string)
                     total_found += found
                     total_scanned += len(payloads)
                     vulnerable_urls.extend(urls_with_payloads)
@@ -1715,15 +1816,20 @@ try:
             session.mount('http://', adapter)
             session.mount('https://', adapter)
             return session
-        
-        def test_lfi(url, payloads, success_criteria, max_threads=5):
+
+        def test_lfi(url, payloads, success_criteria, max_threads=5, cookie_string=None):
             def check_payload(payload):
                 encoded_payload = urllib.parse.quote(payload.strip())
                 target_url = f"{url}{encoded_payload}"
                 start_time = time.time()
                 
                 try:
-                    response = requests.get(target_url)
+                    headers = {
+                        'User-Agent': get_random_user_agent()
+                    }
+                    if cookie_string:
+                        headers['Cookie'] = cookie_string
+                    response = requests.get(target_url, headers=headers, timeout=15)
                     response_time = round(time.time() - start_time, 2)
                     result = None
                     is_vulnerable = False
@@ -1834,7 +1940,10 @@ try:
 
         def get_file_path(prompt_text):
             completer = PathCompleter()
-            return prompt(prompt_text, completer=completer).strip()
+            try:
+                return prompt(prompt_text, completer=completer).strip()
+            except Exception:
+                return input(prompt_text).strip()
 
         clear_screen()
 
@@ -1870,6 +1979,7 @@ try:
         payloads = prompt_for_payloads()
         success_criteria_input = input("[?] Enter the success criteria patterns (comma-separated, e.g: 'root:,admin:', press Enter for 'root:x:0:'): ").strip()
         success_criteria = [pattern.strip() for pattern in success_criteria_input.split(',')] if success_criteria_input else ['root:x:0:']
+        cookie_string = input("[?] Enter the Cookie header for an authenticated session (press Enter if none): ").strip() or None
         
         max_threads_input = input("[?] Enter the number of concurrent threads (0-10, press Enter for 5): ").strip()
         max_threads = int(max_threads_input) if max_threads_input.isdigit() and 0 <= int(max_threads_input) <= 10 else 5
@@ -1901,7 +2011,7 @@ try:
                 print(Fore.YELLOW + "\n┌" + "─" * (box_width - 2) + "┐")
                 print(Fore.YELLOW + f"│{box_content.center(box_width - 2)}│")
                 print(Fore.YELLOW + "└" + "─" * (box_width - 2) + "┘\n")
-                found, urls_with_payloads = test_lfi(url, payloads, success_criteria, max_threads)
+                found, urls_with_payloads = test_lfi(url, payloads, success_criteria, max_threads, cookie_string)
                 total_found += found
                 total_scanned += len(payloads)
                 vulnerable_urls.extend(urls_with_payloads)
@@ -1989,7 +2099,7 @@ try:
             session.mount('https://', adapter)
             return session
 
-        def check_crlf_vulnerability(url, payload, scan_state=None):
+        def check_crlf_vulnerability(url, payload, scan_state=None, cookie=None):
             target_url = f"{url}{payload}"
             start_time = time.time()
 
@@ -1999,6 +2109,8 @@ try:
                 'Accept-Encoding': 'gzip, deflate',
                 'Connection': 'close'
             }
+            if cookie:
+                headers['Cookie'] = cookie
 
             result = None
 
@@ -2044,13 +2156,13 @@ try:
                 print(result)
                 return result, False
 
-        def test_crlf(url, max_threads=5):
+        def test_crlf(url, max_threads=5, cookie=None, scan_state=None):
             found_vulnerabilities = 0
             vulnerable_urls = []
             payloads = generate_payloads(url)
 
             with ThreadPoolExecutor(max_workers=max_threads) as executor:
-                future_to_payload = {executor.submit(check_crlf_vulnerability, url, payload): payload for payload in payloads}
+                future_to_payload = {executor.submit(check_crlf_vulnerability, url, payload, scan_state, cookie): payload for payload in payloads}
                 for future in as_completed(future_to_payload):
                     payload = future_to_payload[future]
                     try:
@@ -2091,7 +2203,10 @@ try:
                 report_file = save_html_report(html_content, filename)
 
         def get_file_path(prompt_text):
-            return prompt(prompt_text, completer=PathCompleter())
+            try:
+                return prompt(prompt_text, completer=PathCompleter()).strip()
+            except Exception:
+                return input(prompt_text).strip()
 
         def prompt_for_urls():
             while True:
@@ -2137,7 +2252,8 @@ try:
         print(Fore.GREEN + "Welcome to the CRLF Injection Testing Tool!\n")
 
         urls = prompt_for_urls()
-        
+        cookie = input("[?] Enter cookie string for authentication (e.g: session=abc; PHPSESSID=xyz), press Enter if not needed: ").strip() or None
+
         max_threads_input = input("[?] Enter the number of concurrent threads (1-10, press Enter for 5): ").strip()
         max_threads = int(max_threads_input) if max_threads_input.isdigit() and 1 <= int(max_threads_input) <= 10 else 5
 
@@ -2165,7 +2281,7 @@ try:
             print(Fore.YELLOW + f"│{box_content.center(box_width - 2)}│")
             print(Fore.YELLOW + "└" + "─" * (box_width - 2) + "┘\n")
 
-            found, urls_with_payloads = test_crlf(url, max_threads)
+            found, urls_with_payloads = test_crlf(url, max_threads, cookie, scan_state)
             total_found += found
             total_scanned += len(generate_payloads(url))
             vulnerable_urls.extend(urls_with_payloads)
