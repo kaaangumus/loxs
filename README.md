@@ -1,238 +1,262 @@
-<div align="center">
-   <a href="https://github.com/coffinxp/loxs"><img src="https://github.com/user-attachments/assets/9fadee1e-a33c-46e3-9eca-c04aa47a443e" hight="225" width="450" align="center"/></a>
-</div>
+# LOXS
 
-<br>
-<br>
-<br>
+LOXS is a Python web vulnerability scanner for authorized security testing. It includes the original CLI workflow plus a Tkinter GUI with authenticated scan support, dark theme, grouped HTML reports, and Windows/Linux setup scripts.
 
-<div align="center">
-   
-|Loxs|Multi Vulnerability Scanner|for web application|
-|----------------|--------------|-------------|
-| `L`| `=`| `Local File Inclusion (LFI)`|
-| `O`| `=`| `Open Redirection (OR)`|
-| `X`| `=`| `Cross Site Scripting (XSS)`|
-| `S`| `=`| `Structured Query Language Injection (SQLi)`|
-|    |    | `Carriage Return Line Feed Injection (CRLF)`|
+> Use this tool only on systems you own or have explicit permission to test.
 
-> **Loxs** is an easy-to-use tool that finds web issues like `LFI` - `OR` - `SQLi` - `XSS` - `CRLF`. <br><br> *`Made by`* - [`AnonKryptiQuz`](https://github.com/AnonKryptiQuz) x [`Coffinxp`](https://github.com/coffinxp) x [`HexShad0w`](https://github.com/HexShad0w) x [`Naho`](https://github.com/Naho666) x [`1hehaq`](https://github.com/1hehaq) x [`Hghost010`](https://github.com/Hghost0x00)!
+## Scanners
 
-</div>
+| Scanner | Purpose |
+| --- | --- |
+| LFI | Local File Inclusion checks with configurable success criteria |
+| Open Redirect | Redirect parameter testing with Selenium support |
+| SQLi | Time-based SQL injection checks |
+| XSS | Reflected XSS checks with Selenium alert detection |
+| CRLF | Header/body injection checks with built-in payloads |
 
-<hr>
+## Highlights
 
-<br>
-<br>
-<br>
+- CLI and Tkinter GUI launchers
+- Cookie header support for authenticated targets
+- Selenium cookie injection for XSS and Open Redirect scans
+- Chrome profile support for existing logged-in browser sessions
+- Dark themed GUI with scanner-specific controls
+- Multi-threaded request-based scans
+- HTML report export grouped by site and vulnerability type
+- Windows PowerShell setup script
+- Linux setup script with `.venv` creation
 
+## Requirements
 
-| Features                          | About                                                                       |
-|-----------------------------------|-----------------------------------------------------------------------------|
-| `LFI Scanner`                     | Detect Local File Inclusion vulnerabilities.                                |
-| `OR Scanner`                      | Identify Open Redirect vulnerabilities.                                     |
-| `SQL Scanner`                     | Detect SQL Injection vulnerabilities.                                       |
-| `XSS Scanner`                     | Identify Cross-Site Scripting vulnerabilities.                              |
-| `CRLF Scanner`                    | Detect Carriage Return Line Feed Injection vulnerabilities.                 |
-| `Multi-threaded Scanning`         | Improved performance through multi-threading.                               |
-| `Customizable Payloads`           | Adjust payloads to suit specific targets.                                   |
-| `Success Criteria`                | Modify success detection criteria for specific use cases.                   |
-| `User-friendly CLI`               | Simple and intuitive command-line interface.                                |
-| `Save Vulnerable URLs`            | Option to save vulnerable URLs to a file for future reference.              |
-| `HTML Report Generation`          | Generates a detailed HTML report of found vulnerabilities.                  |
-<!-- | `Share HTML Report via Telegram`  | Share HTML vulnerability reports directly through Telegram.                 | -->
+- Python 3.10+
+- Google Chrome or Chromium for Selenium-based scans
+- Tkinter for GUI mode
 
-<br>
-<hr>
-<br>
-<br>
-
-| Language                          | Packages                                                                    |
-|-----------------------------------|-----------------------------------------------------------------------------|
-| ***Python***| `Python 3.x` `webdriver_manager` `selenium` `aiohttp` `beautifulsoup4` `colorama` `rich` `requests` `gitpython` `prompt_toolkit` `pyyaml` `Flask`|
-
-<br>
-<hr>
-<br>
+Python packages are listed in [requirements.txt](requirements.txt).
 
 ## Installation
 
-### Clone the repository
+### Clone
 
 ```bash
-git clone https://github.com/coffinxp/loxs.git
-```
-```bash
+git clone https://github.com/kaaangumus/loxs.git
 cd loxs
 ```
 
-### Install the requirements
+### Windows
 
-```bash
-pip3 install -r requirements.txt
-```
-
-### Windows setup
-
-PowerShell:
+Run PowerShell in the project folder:
 
 ```powershell
 .\setup_windows.ps1
 ```
 
-Run the GUI after setup:
+Start the GUI:
 
 ```powershell
 .\.venv\Scripts\python.exe .\lox.py
 ```
 
-Run the CLI after setup:
+Start the CLI:
 
 ```powershell
 .\.venv\Scripts\python.exe .\loxs.py
 ```
 
-### Linux setup
+If PowerShell blocks scripts, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup_windows.ps1
+```
+
+### Linux
 
 ```bash
 chmod +x setup_linux.sh
 ./setup_linux.sh
 ```
 
-If `python3-venv` or `tkinter` is missing on Debian/Ubuntu:
+Start the GUI:
 
 ```bash
-sudo apt update && sudo apt install -y python3-venv python3-tk
+source .venv/bin/activate
+python lox.py
 ```
 
-Run the GUI after setup:
+Start the CLI:
 
 ```bash
-source .venv/bin/activate && python lox.py
+source .venv/bin/activate
+python loxs.py
 ```
 
-Run the CLI after setup:
+If venv or Tkinter is missing on Debian/Ubuntu:
 
 ```bash
-source .venv/bin/activate && python loxs.py
+sudo apt update
+sudo apt install -y python3-venv python3-tk
 ```
 
-### Run the Script
+Fedora:
 
 ```bash
-python3 loxs.py
+sudo dnf install -y python3-tkinter
 ```
 
-### Run the Tkinter GUI
-
-```powershell
-python .\lox.py
-```
-
-or:
-
-```powershell
-python .\loxs_gui.py
-```
-<!-- to update the tool to the latest version
-```bash
-just edit the config.yml file with your tool directory
-after pressing 5 and exiting from the tool run the tool again it will run with an updated version
-``` -->
-
-----
-
-| Input Information         |                                                                                         |
-|---------------------------|-----------------------------------------------------------------------------------------|
-| Input URL/File            | Provide a single URL or an input file containing multiple URLs for scanning.            |
-| Payload File              | Select or provide a custom payload file for the specific type of vulnerability scanning.|
-| Success Criteria          | Define patterns or strings indicating a successful exploitation attempt.                |
-| Concurrent Threads        | Set the number of threads for multi-threaded scanning.                                  |
-| View and Save Results     | Display results in real-time during the scan, and save vulnerable URLs for future use.  |
-
-----
-
-## Authenticated Selenium Scans
-
-If the target site requires a logged-in session, use the Selenium-based scanners with an existing Chrome profile.
-
-1. Log in to the target site in Chrome with the profile you want to reuse.
-2. Close Chrome before starting a scan so the profile directory is not locked.
-3. When Loxs asks for the Chrome profile directory, enter the profile data folder path, for example `%LOCALAPPDATA%\Google\Chrome\User Data` on Windows or `~/.config/google-chrome` on Linux.
-4. Use this mode for the Selenium-based scanners, especially Open Redirect and XSS.
-5. When a profile is provided, Loxs automatically reduces concurrency to a single Selenium driver to avoid profile conflicts.
-
-----
-
-| Customization              |                                                                                          |
-|----------------------------|------------------------------------------------------------------------------------------|
-| Custom Payloads            | Modify or create payload files for different vulnerability types to target specific apps.|
-| Success Criteria           | Adjust the tool's success patterns to more accurately detect successful exploitations.   |
-| Concurrent Threads         | Control the number of threads used during the scan for performance optimization.         |
-
-
-----
-
-### Chrome Installation
+Arch:
 
 ```bash
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo pacman -S python tk
 ```
+
+## GUI Usage
+
+Launch:
 
 ```bash
-sudo dpkg -i google-chrome-stable_current_amd64.deb
+python lox.py
 ```
 
-- If you encounter any errors during installation, use the following command:
+Basic flow:
+
+1. Select a scanner: `SQLi`, `LFI`, `CRLF`, `XSS`, or `Open Redirect`.
+2. Enter one or more target URLs, one per line.
+3. Select or edit the payload file when the scanner needs one.
+4. Paste a raw browser cookie string if the target requires login.
+5. Set thread count and timeout.
+6. Click `Start`.
+7. Click `Export Report` after results appear.
+
+Scanner-specific controls:
+
+| Control | When It Appears |
+| --- | --- |
+| Payload file | All scanners except CRLF |
+| LFI criteria | LFI only |
+| Chrome profile | XSS and Open Redirect |
+
+## Cookie Authentication
+
+For authenticated targets, copy the full browser cookie header and paste it into the GUI or CLI cookie prompt.
+
+Example:
+
+```text
+session=abc123; PHPSESSID=xyz789
+```
+
+Where to get it:
+
+1. Open the target in your browser after logging in.
+2. Press `F12`.
+3. Open the `Network` tab.
+4. Click any authenticated request.
+5. Copy the `Cookie:` request header value.
+
+Request-based scanners send it as:
+
+```http
+Cookie: session=abc123; PHPSESSID=xyz789
+```
+
+Selenium scanners visit the target domain first, inject the cookies into Chrome, then continue to the payload URL.
+
+## Chrome Profile Authentication
+
+For XSS and Open Redirect, you may also reuse a logged-in Chrome profile.
+
+1. Log in to the target in Chrome.
+2. Close Chrome completely.
+3. In LOXS GUI, choose the Chrome profile directory.
+
+Common profile paths:
+
+Windows:
+
+```text
+%LOCALAPPDATA%\Google\Chrome\User Data
+```
+
+Linux:
+
+```text
+~/.config/google-chrome
+```
+
+When a profile is used, scanning should be kept single-threaded to avoid Chrome profile locks.
+
+## Reports
+
+The GUI exports HTML reports with:
+
+- Site summary
+- Unique findings grouped by site, scanner, endpoint, and parameter
+- One visible finding per vulnerable URL parameter
+- Working payloads hidden under expandable detail sections
+- Full raw results table
+
+This keeps reports readable while preserving evidence for payloads that worked.
+
+## Payloads
+
+Default payload files live under [payloads](payloads):
+
+```text
+payloads/
+  lfi.txt
+  or.txt
+  xss.txt
+  xsspollygots.txt
+  sqli/
+    generic.txt
+    mysql.txt
+    oracle.txt
+    postgresql.txt
+    xor.txt
+```
+
+You can edit these files or select custom payload files in the GUI.
+
+## CLI Usage
+
+Run:
 
 ```bash
-sudo apt -f install
+python loxs.py
 ```
+
+Menu:
+
+```text
+1] LFI Scanner
+2] OR Scanner
+3] SQLi Scanner
+4] XSS Scanner
+5] CRLF Scanner
+6] tool Update
+7] Exit
+```
+
+The CLI prompts for URL files, payload files, cookies, thread count, and reports depending on the selected scanner.
+
+## Development Checks
+
+Syntax check:
 
 ```bash
-sudo dpkg -i google-chrome-stable_current_amd64.deb
+python -m py_compile loxs.py loxs_gui.py lox.py
 ```
 
-----
-
-### Chrome Driver Installation
+Dependency check:
 
 ```bash
-wget https://storage.googleapis.com/chrome-for-testing-public/128.0.6613.119/linux64/chromedriver-linux64.zip
+python -m pip check
 ```
-```bash
-unzip chromedriver-linux64.zip
-```
-```bash
-cd chromedriver-linux64 
-```
-```bash
-sudo mv chromedriver /usr/bin
-```
-<hr>
 
-> [!WARNING]  
-> Loxs is intended for educational and ethical hacking purposes only. It should only be used to test systems you own or have explicit permission to test. Unauthorized use of third-party websites or systems without consent is illegal and unethical.
+## Legal Notice
 
-## 📊 Repository Stats
+LOXS is intended for education, research, and authorized security testing only. Do not scan third-party systems without clear permission. You are responsible for complying with applicable laws and rules.
 
-[![License](https://img.shields.io/badge/BSD-3-Clause.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/downloads/)
-![GitHub repo size](https://img.shields.io/github/repo-size/coffinxp/loxs)
-![GitHub last commit](https://img.shields.io/github/last-commit/coffinxp/loxs)
-[![GitHub Stars](https://img.shields.io/github/stars/coffinxp/loxs?style=social)](https://github.com/coffinxp/loxs/stargazers)
-![GitHub issues](https://img.shields.io/github/issues/coffinxp/loxs)
+## License
 
-<br>
-
-<p align="center">
-<img src="https://github.com/user-attachments/assets/9ec3fed0-45ff-4cb3-988c-f8cd66e85082">
-</p>
-
-
-<br>
-
-
-
-
-
+See [LICENSE](LICENSE).
