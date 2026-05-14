@@ -76,18 +76,22 @@ chmod +x setup_linux.sh
 ./setup_linux.sh
 ```
 
-Start the GUI:
+The Linux installer creates:
+
+- `loxs` terminal command for the CLI
+- `loxs-gui` terminal command for the GUI
+- a `LOXS` desktop menu entry under the local application menu
+
+Start the GUI from the Kali application menu by clicking **LOXS**, or from terminal:
 
 ```bash
-source .venv/bin/activate
-python lox.py
+loxs-gui
 ```
 
 Start the CLI:
 
 ```bash
-source .venv/bin/activate
-python loxs.py
+loxs
 ```
 
 If venv or Tkinter is missing on Debian/Ubuntu:

@@ -16,6 +16,18 @@ warn() {
   printf '\033[33m[!] %s\033[0m\n' "$1"
 }
 
+write_launcher() {
+  local target="$1"
+  local entrypoint="$2"
+
+  cat > "$target" <<EOF
+#!/usr/bin/env bash
+cd "$PROJECT_ROOT"
+exec "$PROJECT_ROOT/.venv/bin/python" "$PROJECT_ROOT/$entrypoint" "\$@"
+EOF
+  chmod +x "$target"
+}
+
 if command -v python3 >/dev/null 2>&1; then
   PYTHON_BIN="python3"
 elif command -v python >/dev/null 2>&1; then
@@ -72,10 +84,43 @@ fi
 step "Checking installed packages..."
 python -m pip check
 
+step "Installing launchers..."
+LOCAL_BIN="${HOME}/.local/bin"
+APPLICATIONS_DIR="${HOME}/.local/share/applications"
+mkdir -p "$LOCAL_BIN" "$APPLICATIONS_DIR"
+
+write_launcher "${LOCAL_BIN}/loxs" "loxs.py"
+write_launcher "${LOCAL_BIN}/loxs-gui" "lox.py"
+
+cat > "${APPLICATIONS_DIR}/loxs.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=LOXS
+Comment=Authorized web vulnerability scanner GUI
+Exec=${LOCAL_BIN}/loxs-gui
+Path=${PROJECT_ROOT}
+Icon=utilities-terminal
+Terminal=false
+Categories=Security;Utility;
+Keywords=security;scanner;web;loxs;
+StartupNotify=true
+EOF
+
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database "$APPLICATIONS_DIR" >/dev/null 2>&1 || true
+fi
+
 ok "Setup complete."
 echo
-echo "Run CLI:"
-echo "  source .venv/bin/activate && python loxs.py"
+echo "Run CLI from terminal:"
+echo "  loxs"
 echo
 echo "Run GUI:"
-echo "  source .venv/bin/activate && python lox.py"
+echo "  loxs-gui"
+echo "  Or open LOXS from the application menu."
+echo
+if ! printf '%s' ":${PATH}:" | grep -q ":${LOCAL_BIN}:"; then
+  warn "${LOCAL_BIN} is not in PATH for this shell."
+  echo "Add this to your shell config if 'loxs' is not found:"
+  echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+fi
