@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.1
+
+- Java 24+ ortamlarında görünen native access ve Unsafe uyarıları Linux launcher'da susturuldu.
+- JavaFX "unnamed module" bilgi uyarısı kod tarafında kapatıldı.
+- Linux launcher, Java sürümüne göre güvenli JVM bayraklarını otomatik seçer.
+
 ## 2.1.0
 
 - Linux sürümü eklendi (JavaFX Linux native kütüphaneleri, çalıştırma betiği ve tar.gz paketi).

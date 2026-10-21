@@ -32,13 +32,19 @@ if ! command -v java >/dev/null 2>&1; then
   exit 1
 fi
 
-JAVA_MAJOR=$(java -version 2>&1 | awk -F'[" .]' '/version/ {print $2; exit}')
+JAVA_MAJOR=$(java -version 2>&1 | awk -F'"' '/version/ {print $2; exit}' | cut -d. -f1)
 if [[ "${JAVA_MAJOR}" =~ ^[0-9]+$ ]] && (( JAVA_MAJOR < 17 )); then
   echo "LOXS icin Java 17+ gerekli (mevcut: ${JAVA_MAJOR})." >&2
   exit 1
 fi
 
-exec java -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar "$JAR" "$@"
+JAVA_FLAGS=()
+if [[ "${JAVA_MAJOR}" =~ ^[0-9]+$ ]] && (( JAVA_MAJOR >= 24 )); then
+  JAVA_FLAGS+=(--enable-native-access=ALL-UNNAMED)
+  JAVA_FLAGS+=(--sun-misc-unsafe-memory-access=allow)
+fi
+
+exec java "${JAVA_FLAGS[@]}" -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -jar "$JAR" "$@"
 LAUNCHER
 chmod +x "$PKG/loxs"
 

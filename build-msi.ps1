@@ -48,7 +48,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "Gradle build failed."
 }
 
-$Jar = Join-Path $Root "build\libs\loxs-java-2.1.0-all.jar"
+$Jar = Join-Path $Root "build\libs\loxs-java-2.1.1-all.jar"
 if (-not (Test-Path $Jar)) {
     throw "Fat jar not found: $Jar"
 }
@@ -58,7 +58,7 @@ $DistDir = Join-Path $Root "dist"
 Remove-Item $InputDir -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $InputDir | Out-Null
 New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
-Copy-Item $Jar (Join-Path $InputDir "loxs-java-2.1.0-all.jar")
+Copy-Item $Jar (Join-Path $InputDir "loxs-java-2.1.1-all.jar")
 
 Get-ChildItem $DistDir -Filter "*.msi" -ErrorAction SilentlyContinue | Remove-Item -Force
 
@@ -66,12 +66,12 @@ Write-Step "Creating MSI..."
 & jpackage `
     --type msi `
     --name "LOXS" `
-    --app-version "2.1.0" `
+    --app-version "2.1.1" `
     --vendor "Kaan Gumus" `
     --description "LOXS authorized web security scanner" `
     --copyright "Copyright (c) 2026" `
     --input $InputDir `
-    --main-jar "loxs-java-2.1.0-all.jar" `
+    --main-jar "loxs-java-2.1.1-all.jar" `
     --main-class "com.loxs.LoxsFxLauncher" `
     --dest $DistDir `
     --icon (Join-Path $Root "src\main\resources\loxs.ico") `

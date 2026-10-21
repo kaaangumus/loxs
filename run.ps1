@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Root
-$Jar = Join-Path $Root "build\libs\loxs-java-2.1.0-all.jar"
+$Jar = Join-Path $Root "build\libs\loxs-java-2.1.1-all.jar"
 if (-not (Test-Path $Jar)) {
     $Gradle = Join-Path $Root "gradlew.bat"
     if (Test-Path $Gradle) {

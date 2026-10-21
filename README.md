@@ -71,7 +71,7 @@ powershell -ExecutionPolicy Bypass -File .\build-msi.ps1
 Çıktı:
 
 ```text
-dist/LOXS-2.1.0.msi
+dist/LOXS-2.1.1.msi
 ```
 
 ## Linux Paketi
@@ -83,7 +83,7 @@ dist/LOXS-2.1.0.msi
 Çıktı:
 
 ```text
-dist-linux/LOXS-2.1.0-linux-x64.tar.gz
+dist-linux/LOXS-2.1.1-linux-x64.tar.gz
 ```
 
 Paket içindeki `loxs` betiği ile çalıştırılır; Java 17+ ve masaüstü (X11/Wayland) gerekir.
