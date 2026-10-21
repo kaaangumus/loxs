@@ -1,31 +1,21 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environments
-.venv/
-venv/
-env/
-ENV/
-
-# Local editor and OS files
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Logs and reports
-*.log
-*.err.log
-loxs_report_*.html
-*_report_*.html
-xssreport.html
-
-# Local test/lab artifacts
-lab/
-
-# Build artifacts
+# Gradle
+.gradle/
 build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Packaging ve yerel araçlar
 dist/
-*.egg-info/
+dist-linux/
+release/
+.tools/
+*.msi
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Ekran görüntüleri ve geçici dosyalar
+screenshot*.png
+robot-shot.png
+*.log

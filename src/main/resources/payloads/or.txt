@@ -1,0 +1,8 @@
+https://loxs-redirect.example/
+//loxs-redirect.example/
+https://example.com/
+//example.com/
+http://google.com
+https://www.google.com/
+https://loxs-redirect.example/path?next=1
+//loxs-redirect.example/%2f%2f

